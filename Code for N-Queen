@@ -1,117 +1,61 @@
-#include <bits/stdc++.h>
-
+#include <iostream>
+#include <vector>
 using namespace std;
 
-int boardSize, recursiveCalls = 0;
-vector<vector<int>> board;
-int iterationCount = 0;
-int solutionCount = 0;
-int delay = 500;
-bool findAllSolutions = false;
+bool isSafe(vector<vector<int>>& board, int row, int col, int n) {
+    for (int i = 0; i < col; i++)
+        if (board[row][i] == 1)
+            return false;
 
-void printBoard() {
-    cout << "\033[2J\033[1;1H"; // Clear screen
-    cout << "   ";
-    for (int j = 0; j < boardSize; j++) {
-        cout << setw(3) << (char)('a' + j);
-    }
-    cout << endl;
-    
-    for (int i = 0; i < boardSize; i++) {
-        cout << setw(2) << boardSize - i << " ";
-        for (int j = 0; j < boardSize; j++) {
-            if (board[i][j])
-                cout << "\033[1;31m \u265B "; // Red queen
-            else if ((i + j) % 2 == 0)
-                cout << "\033[47m   "; // White square
-            else
-                cout << "\033[100m   "; // Gray square
-        }
-        cout << "\033[0m" << endl; // Reset color
-    }
-    cout << "\nIterations: " << iterationCount << " | Solutions: " << solutionCount << endl;
+    for (int i = row, j = col; i >= 0 && j >= 0; i--, j--)
+        if (board[i][j] == 1)
+            return false;
+
+    for (int i = row, j = col; i < n && j >= 0; i++, j--)
+        if (board[i][j] == 1)
+            return false;
+
+    return true;
 }
 
-bool isSafe(int row, int col) {
-    // Check this row on left side
-    for (int i = 0; i < col; i++)
-        if (board[row][i])
-            return false;
+bool solveNQueensUtil(vector<vector<int>>& board, int col, int n) {
+    if (col >= n)
+        return true;
 
-    // Check upper diagonal on left side
-    for (int i=row, j=col; i>=0 && j>=0; i--, j--)
-        if (board[i][j])
-            return false;
+    for (int i = 0; i < n; i++) {
+        if (isSafe(board, i, col, n)) {
+            board[i][col] = 1;
 
-    // Check lower diagonal on left side
-    for (int i=row, j=col; j>=0 && i<boardSize; i++, j--)
-        if (board[i][j]) 
-            return false;
+            if (solveNQueensUtil(board, col + 1, n))
+                return true;
 
-    return true;
+            board[i][col] = 0;
+        }
+    }
+
+    return false;
 }
 
-bool solveNQueensUtil(int col) {
-    recursiveCalls++; // Increment the recursive calls counter
+void solveNQueens(int n) {
+    vector<vector<int>> board(n, vector<int>(n, 0));
 
-    if (col >= boardSize) {
-        solutionCount++;
-        printBoard();
-        this_thread::sleep_for(chrono::milliseconds(delay));
-        return findAllSolutions ? false : true;
-    }
-    
-    for (int i = 0; i < boardSize; i++) {
-        iterationCount++;
-        
-        if (isSafe(i, col)) {
-            board[i][col] = 1;
-            
-            printBoard();
-            this_thread::sleep_for(chrono::milliseconds(delay));
+    if (!solveNQueensUtil(board, 0, n)) {
+        cout << "Solution does not exist" << endl;
+        return;
+    }
 
-            if (solveNQueensUtil(col + 1)) return true;
 
-            board[i][col] = 0; // Backtrack
-            printBoard();
-            this_thread::sleep_for(chrono::milliseconds(delay)); 
-        }
-    }
-
-    return false;
-}
-
-void solveNQueens() {
-    solveNQueensUtil(0);
-    if (solutionCount == 0) {
-        cout << "Solution does not exist" << endl;
-    } else {
-        cout << "Found " << solutionCount << " solution(s)" << endl;
-    }
-    printBoard();
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++)
+            cout << board[i][j] << " ";
+        cout << endl;
+    }
 }
 
 int main() {
-    cout << "Enter the size of the chessboard: ";
-    cin >> boardSize;
-
-    cout << "Find all solutions? (0 for No, 1 for Yes): ";
-    cin >> findAllSolutions;
-
-    cout << "Enter delay between steps (in milliseconds): ";
-    cin >> delay;
-
-    board = vector<vector<int>>(boardSize, vector<int>(boardSize, 0));
-
-    auto start = chrono::high_resolution_clock::now();
-    
-    solveNQueens();
-    
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-
-    cout << "Recursive calls made: " << recursiveCalls << endl;
-    cout << "Execution time: " << fixed << setprecision(2) << duration.count() / 1000.0 << " seconds" << endl;
+    int n;
+    cout << "Enter the number of queens: ";
+    cin >> n;
+    solveNQueens(n);
+    return 0;
 }
-
-
